@@ -1,5 +1,5 @@
 # import generic python modules
-# hello
+
 import argparse
 import operator
 from operator import itemgetter
@@ -43,18 +43,45 @@ Other options
   
 ''')
 
-import mdtraj as md
+import mdtraj as mdt
 import numpy as np
-import mdanalysis as mda
-import numpy as np
-import MDAnalysis
-#from MDAnalysis.core.parallel.distances import distance_array
-from MDAnalysis.analysis.distances import distance_array, self_distance_array
-import networkx as nx
 import subprocess
 import math
 import matplotlib as plt
 import argparse
+
+# options
+
+#data options
+parser.add_argument('-f', nargs=1, dest='grofilename', default=['no'], help=argparse.SUPPRESS, required=True)
+parser.add_argument('-x', nargs=1, dest='xtcfilename', default=['no'], help=argparse.SUPPRESS)
+parser.add_argument('-o', nargs=1, dest='output_folder', default=['no'], help=argparse.SUPPRESS)
+parser.add_argument('--version', action='version', version='%(prog)s v' + version_nb, help=argparse.SUPPRESS)
+parser.add_argument('-h','--help', action='help', help=argparse.SUPPRESS)
+
+# store inputs
+
+# parsing
+args = parser.parse_args()
+
+args.grofilename = args.grofilename[0]
+args.xtcfilename = args.xtcfilename[0]
+args.output_folder = args.output_folder[0]
+
+# load and check files
+
+traj = md.load('./*.xtc', top='./*.pdb') 
+
+print "Shape of Cartesian coordinate array:"
+print traj.xyz.shape
+print "Time of final frame (ns):"
+print traj.time[-1]
+
+# save coordinates of protein + lipids + ions only:
+
+atoms_to_keep = [a.index for a in traj.topology.atoms if a.name != 'W']
+traj.restrict_atoms(atoms_to_keep)
+traj.save('trajectory_for_analysis.h5')
 
 # define functions
 
@@ -78,20 +105,7 @@ def plotHistogram():
 
 def plotLine():
 
-# load and check files
 
-traj = md.load('./*.xtc', top='./*.pdb') 
-
-print "Shape of Cartesian coordinate array:"
-print traj.xyz.shape
-print "Time of final frame (ns):"
-print traj.time[-1]
-
-# save coordinates of protein + lipids + ions only:
-
-atoms_to_keep = [a.index for a in traj.topology.atoms if a.name != 'W']
-traj.restrict_atoms(atoms_to_keep)
-traj.save('trajectory_for_analysis.h5')
 
 # run analysis
 
